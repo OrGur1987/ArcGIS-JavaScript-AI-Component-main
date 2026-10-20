@@ -1,0 +1,713 @@
+/* ── Google Fonts (Hebrew-first) ──────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* ── Design tokens ────────────────────────────────────────────────────────── */
+:root {
+  /* Cool slate neutrals */
+  --slate-950: #060a13; --slate-900: #0b1220; --slate-800: #1e293b;
+  --slate-700: #334155; --slate-600: #475569; --slate-500: #64748b;
+  --slate-400: #94a3b8; --slate-300: #cbd5e1; --slate-200: #e2e8f0;
+  --slate-150: #eaeff5; --slate-100: #f1f5f9; --slate-50: #f8fafc;
+  --white: #ffffff;
+
+  /* Neon cyan accent */
+  --cyan-700: #0e7490; --cyan-600: #0891b2; --cyan-500: #06b6d4;
+  --cyan-400: #22d3ee; --cyan-300: #67e8f9; --cyan-200: #a5f3fc;
+  --cyan-100: #cffafe; --cyan-050: #ecfeff;
+  --teal-500: #14b8a6; --teal-400: #2dd4bf;
+
+  /* Semantic signal */
+  --live-500: #10b981; --warn-500: #f59e0b; --danger-500: #ef4444; --info-500: #3b82f6;
+
+  /* Semantic aliases */
+  --bg-deep: var(--slate-150);
+  --glass-fill: rgba(255, 255, 255, 0.62);
+  --glass-fill-strong: rgba(255, 255, 255, 0.80);
+  --glass-fill-faint: rgba(255, 255, 255, 0.40);
+  --glass-tint-cyan: rgba(34, 211, 238, 0.06);
+  --text-strong: var(--slate-900); --text-body: var(--slate-700);
+  --text-muted: var(--slate-500); --text-faint: var(--slate-400);
+  --accent: var(--cyan-400); --accent-strong: var(--cyan-500);
+  --accent-deep: var(--cyan-600); --accent-ink: var(--cyan-700);
+  --accent-soft: var(--cyan-050);
+  --accent-glow: rgba(34, 211, 238, 0.55);
+  --accent-glow-soft: rgba(34, 211, 238, 0.22);
+  --border: var(--slate-200); --border-strong: var(--slate-300);
+  --border-faint: rgba(148, 163, 184, 0.28);
+  --border-glass: rgba(255, 255, 255, 0.65);
+  --border-accent: rgba(34, 211, 238, 0.45);
+
+  /* Typography */
+  --font-display: 'Manrope', 'Heebo', system-ui, sans-serif;
+  --font-ui: 'Heebo', 'Manrope', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700; --fw-extra: 800;
+  --fs-xs: 12px; --fs-sm: 13px; --fs-base: 15px; --fs-md: 17px; --fs-lg: 20px;
+  --ls-tight: -0.02em; --ls-wider: 0.12em;
+
+  /* Layout */
+  --panel-width: 400px; --panel-width-edit: 620px; --panel-inset: 18px;
+  --header-height: 62px; --controls-clearance: 46px;
+  --radius-xs: 6px; --radius-sm: 10px; --radius-md: 14px; --radius-lg: 20px;
+  --radius-xl: 26px; --radius-pill: 999px;
+  --z-map: 0; --z-header: 30; --z-panel: 20;
+
+  /* Effects */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 2px 6px -2px rgba(15, 23, 42, 0.10);
+  --shadow-glass: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
+                  0 2px 6px rgba(15, 23, 42, 0.05),
+                  0 24px 60px -18px rgba(15, 23, 42, 0.30);
+  --glow-sm: 0 0 0 1px var(--accent-glow-soft), 0 0 14px -2px var(--accent-glow-soft);
+  --glow-md: 0 0 20px -2px var(--accent-glow-soft), 0 0 40px -8px var(--accent-glow-soft);
+  --grad-border: linear-gradient(135deg,
+    rgba(34, 211, 238, 0.85) 0%,
+    rgba(255, 255, 255, 0.55) 40%,
+    rgba(45, 212, 191, 0.55) 100%);
+  --grad-accent: linear-gradient(135deg, var(--cyan-400), var(--teal-400));
+  --grad-ambient:
+    radial-gradient(120% 90% at 15% -10%, rgba(34, 211, 238, 0.14), transparent 55%),
+    radial-gradient(90% 80% at 105% 110%, rgba(45, 212, 191, 0.10), transparent 50%);
+  --blur-glass: 18px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-base: 220ms; --dur-slow: 420ms;
+}
+
+@keyframes ds-pulse-live {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+@keyframes ds-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Base / reset ─────────────────────────────────────────────────────────── */
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  font-family: var(--font-ui);
+  background: var(--bg-deep);
+  overflow: hidden;
+}
+
+calcite-modal {
+  --calcite-modal-width: 500px;
+  --calcite-modal-max-width: 90vw;
+}
+
+calcite-modal::part(container) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+arcgis-map {
+  display: block;
+}
+
+/* ── Full-bleed viewport ──────────────────────────────────────────────────── */
+.ds-viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+arcgis-map.ds-map {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-map);
+}
+
+.ds-ambient {
+  position: absolute;
+  inset: 0;
+  background: var(--grad-ambient);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Floating command header ──────────────────────────────────────────────── */
+.ds-header {
+  position: absolute;
+  top: var(--panel-inset);
+  left: calc(var(--panel-inset) + var(--controls-clearance));
+  z-index: var(--z-header);
+  max-width: calc(100% - var(--panel-width) - var(--panel-inset) * 2 - var(--controls-clearance) - 24px);
+  animation: ds-fade-up var(--dur-slow) var(--ease-out) both;
+}
+
+.app-shell--edit .ds-header {
+  max-width: calc(100% - var(--panel-width-edit) - var(--panel-inset) * 2 - var(--controls-clearance) - 24px);
+}
+
+.ds-header-border {
+  padding: 1px;
+  border-radius: var(--radius-lg);
+  background: var(--border-glass);
+  box-shadow: var(--shadow-glass);
+}
+
+.ds-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-radius: calc(var(--radius-lg) - 1px);
+  min-height: var(--header-height);
+  background: var(--glass-fill-strong);
+  backdrop-filter: blur(var(--blur-glass)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.4);
+}
+
+.ds-spark {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--grad-accent);
+  box-shadow: var(--glow-sm), var(--shadow-sm);
+  color: var(--slate-950);
+}
+
+.ds-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.05;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ds-eyebrow {
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.01em;
+  color: var(--accent-ink);
+  font-weight: var(--fw-semibold);
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.ds-header-eyebrow {
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+  color: var(--accent-ink);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.ds-eyebrow-latin {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--ls-wider);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+}
+
+.ds-header-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--ls-tight);
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-header-subtitle {
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-spacer { flex: 1; }
+
+.ds-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-fill-strong);
+  border: 1px solid var(--border-faint);
+  box-shadow: var(--shadow-xs);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--ls-wider);
+  color: var(--text-body);
+  flex-shrink: 0;
+}
+
+.ds-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--live-500);
+  flex-shrink: 0;
+  animation: ds-pulse-live 1.8s var(--ease-out) infinite;
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.app-header-icon-button {
+  --calcite-button-padding-x: 0.5rem;
+  --calcite-button-padding-y: 0.45rem;
+}
+
+/* ── Floating glass AI panel ──────────────────────────────────────────────── */
+.ds-panel {
+  position: absolute;
+  top: var(--panel-inset);
+  right: var(--panel-inset);
+  bottom: var(--panel-inset);
+  width: var(--panel-width);
+  z-index: var(--z-panel);
+  animation: ds-fade-up var(--dur-slow) var(--ease-out) both 60ms;
+}
+
+.app-shell--edit .ds-panel {
+  width: var(--panel-width-edit);
+}
+
+.ds-glass-border {
+  position: relative;
+  height: 100%;
+  padding: 1.5px;
+  border-radius: var(--radius-xl);
+  background: var(--grad-border);
+  box-shadow: var(--shadow-glass), var(--glow-md);
+}
+
+.ds-glass-inner {
+  height: 100%;
+  min-height: 0;
+  border-radius: calc(var(--radius-xl) - 1.5px);
+  overflow: hidden;
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--blur-glass)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.4);
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-panel-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border-glass);
+  background: var(--glass-tint-cyan);
+  flex-shrink: 0;
+}
+
+.ds-panel-strip .ds-live-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.ds-panel-body {
+  flex: 1;
+  min-height: 0;
+  padding: 8px;
+}
+
+.chat-panel-theme {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.chat-panel-theme arcgis-assistant {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: visible;
+  border-radius: 14px;
+}
+
+.chat-panel-theme__assistant {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ── Dialog / editor internals (unchanged structure, RTL-safe) ───────────── */
+.theme-editor-dialog {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.new-map-dialog {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.2rem 0 0.5rem;
+}
+
+.new-map-dialog__intro {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #516473;
+}
+
+.new-map-dialog__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+.new-map-dialog__field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.new-map-dialog__field--wide {
+  grid-column: 1 / -1;
+}
+
+.new-map-dialog__field span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #344a5a;
+}
+
+.new-map-dialog__field input,
+.new-map-dialog__field select,
+.new-map-dialog__field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 0.58rem 0.7rem;
+  border: 1px solid #c8d3dc;
+  border-radius: 0;
+  background: #ffffff;
+  color: #203040;
+  font: inherit;
+  box-sizing: border-box;
+  box-shadow: none;
+}
+
+.new-map-dialog__field calcite-combobox,
+.new-map-dialog__field calcite-text-area,
+.new-map-dialog__field calcite-tree,
+.new-map-dialog__field input {
+  --calcite-corner-radius-sharp: 0;
+  --calcite-corner-radius-round: 0;
+}
+
+.new-map-dialog__field calcite-combobox {
+  --calcite-combobox-input-background-color: #ffffff;
+  --calcite-combobox-input-border-color: #c8d3dc;
+}
+
+.new-map-dialog__field calcite-text-area {
+  --calcite-text-area-background-color: #ffffff;
+  --calcite-text-area-border-color: #c8d3dc;
+}
+
+.new-map-dialog__field textarea {
+  resize: vertical;
+  min-height: 6.5rem;
+}
+
+.new-map-dialog__field input:focus,
+.new-map-dialog__field select:focus,
+.new-map-dialog__field textarea:focus {
+  outline: 2px solid #0079c1;
+  outline-offset: -2px;
+}
+
+.new-map-dialog__helper-text,
+.new-map-dialog__character-count {
+  font-size: 0.75rem;
+  color: #5c7080;
+}
+
+.new-map-dialog__character-count {
+  text-align: end;
+}
+
+.new-map-dialog__tag-add-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.new-map-dialog__field--category calcite-combobox {
+  --calcite-combobox-input-background-color: #ffffff;
+  --calcite-combobox-input-border-color: #c8d3dc;
+}
+
+.new-map-dialog__inline-button,
+.new-map-dialog__selection-chip {
+  border: 1px solid #c8d3dc;
+  border-radius: 0;
+  background: #ffffff;
+  color: #203040;
+  font: inherit;
+}
+
+.new-map-dialog__inline-button {
+  padding: 0.58rem 0.9rem;
+  cursor: pointer;
+}
+
+.new-map-dialog__selection-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.new-map-dialog__selection-chip {
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+}
+
+.new-map-dialog__category-tree-shell calcite-tree {
+  --calcite-tree-background-color: #ffffff;
+  --calcite-tree-text-color: #203040;
+}
+
+.new-map-dialog__summary {
+  min-height: 10rem;
+}
+
+.new-map-dialog__error {
+  color: #8a1f11;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.theme-editor-section-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #516473;
+}
+
+.theme-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.theme-editor-grid--text {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.theme-editor-field,
+.theme-editor-color-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.theme-editor-field--wide {
+  grid-column: span 1;
+}
+
+.theme-editor-field span,
+.theme-editor-color-field span {
+  font-size: 0.78rem;
+  color: #516473;
+}
+
+.theme-editor-color-field {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #ced8df;
+  border-radius: 12px;
+  background: #fbfdfe;
+}
+
+.theme-editor-color-field input {
+  width: 100%;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.theme-editor-text-input {
+  width: 100%;
+  height: 2rem;
+  padding: 0 0.625rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #203040;
+  background: #fff;
+  border: 1px solid #ced8df;
+  border-radius: 4px;
+  box-sizing: border-box;
+  outline: none;
+  appearance: auto;
+}
+
+.theme-editor-text-input:focus {
+  border-color: #007ac2;
+  box-shadow: 0 0 0 2px rgba(0, 122, 194, 0.15);
+}
+
+@media (max-width: 900px) {
+  .ds-header {
+    max-width: calc(100% - var(--panel-inset) * 2 - var(--controls-clearance));
+  }
+
+  .theme-editor-grid,
+  .theme-editor-grid--text {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .new-map-dialog__grid,
+  .theme-editor-grid,
+  .theme-editor-grid--text {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Centered screen wrapper (sign-in, map picker) ─────────────────────────── */
+.centered-screen {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--bg-deep);
+  overflow: hidden;
+}
+
+.centered-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--grad-ambient);
+  pointer-events: none;
+}
+
+/* Wrapper divs (NOT calcite-panel itself, whose shadow-DOM internals force
+   width/height:100% for shell contexts and would otherwise override any
+   sizing applied to the host element directly). */
+.sign-in-panel,
+.map-picker-panel {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-glass), var(--glow-md);
+}
+
+/* ── Sign-in screen ─────────────────────────────────────────────────────────── */
+.sign-in-panel {
+  width: 360px;
+  max-width: 90vw;
+}
+
+.sign-in-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.sign-in-text {
+  margin-top: 0;
+  margin-bottom: 0.35rem;
+  color: #4a4a4a;
+}
+
+.sign-in-subtext {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #6b6b6b;
+  font-size: 0.9rem;
+}
+
+.sign-in-button-row {
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Map picker screen ──────────────────────────────────────────────────────── */
+.map-picker-panel {
+  width: 420px;
+  max-width: 90vw;
+}
+
+.panel-body {
+  padding: 1.5rem;
+}
+
+.map-picker-stack {
+  width: min(100%, 320px);
+  margin: 0 auto;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.map-picker-stack calcite-input {
+  width: 100%;
+}
+
+.map-picker-hint {
+  font-size: 0.85rem;
+  color: #5a6a79;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* ── Change-map dialog body ─────────────────────────────────────────────────── */
+.change-map-dialog-body {
+  padding: 0.75rem 0;
+}
+
+.change-map-current {
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--calcite-color-background, #f3f3f3);
+  border-radius: 4px;
+  border-inline-start: 3px solid var(--calcite-color-brand, #007ac2);
+}
+
+.change-map-current__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--calcite-color-text-3, #6b6b6b);
+  margin-bottom: 0.2rem;
+}
+
+.change-map-current__title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--calcite-color-text-1, #203040);
+  line-height: 1.3;
+}
+
+.change-map-current__id {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: var(--calcite-color-text-3, #6b6b6b);
+  margin-top: 0.15rem;
+  direction: ltr;
+  text-align: end;
+}
