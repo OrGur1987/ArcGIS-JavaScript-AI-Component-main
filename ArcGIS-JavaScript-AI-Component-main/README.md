@@ -4,6 +4,25 @@ React + Vite app built with ArcGIS Maps SDK, ArcGIS Assistant components, and an
 
 The setup steps below include command equivalents for macOS, Linux, and Windows to reduce shell-specific onboarding errors.
 
+## Quick Start (Brand New Computer, Nothing Installed)
+
+Follow this if the machine has no dev tools at all yet. It only covers getting the tools installed — see [Local Setup](#local-setup) below for cloning and configuring this specific app.
+
+1. **Install Git**
+   - Windows: download and run the installer from [git-scm.com](https://git-scm.com/download/win), accepting the defaults.
+   - macOS: run `git --version` in Terminal — this prompts to install the Xcode Command Line Tools if Git is missing.
+   - Linux (Debian/Ubuntu): `sudo apt-get update && sudo apt-get install -y git`
+2. **Install Node.js 18+** (includes `npm`)
+   - Windows/macOS: download the **LTS** installer from [nodejs.org](https://nodejs.org/) and run it, accepting the defaults.
+   - Linux: install via [nvm](https://github.com/nvm-sh/nvm) (`curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash`, restart the shell, then `nvm install --lts`).
+3. **Verify the installs** in a new terminal/PowerShell window:
+   ```bash
+   git --version
+   node --version   # should print v18 or higher
+   npm --version
+   ```
+4. **Continue with [Local Setup](#local-setup)** below: clone the repo, run `npm install`, configure `.env.local` and ArcGIS OAuth, then `npm run dev`.
+
 ## Video Walkthrough
 
 [![Watch the video walkthrough: Agentic GIS Meets MCP: Building an ArcGIS AI App](https://img.youtube.com/vi/fz4QGr099ws/hqdefault.jpg)](https://youtu.be/fz4QGr099ws)
