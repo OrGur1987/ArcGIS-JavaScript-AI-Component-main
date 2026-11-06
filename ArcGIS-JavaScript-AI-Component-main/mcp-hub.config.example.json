@@ -7,5 +7,18 @@
     "mcp-hub.config.json is gitignored and will never be committed."
   ],
   "port": 8808,
-  "servers": []
+  "servers": [
+    {
+      "id": "ta5500",
+      "label": "TA5500 RAG (תוכנית המתאר)",
+      "transport": "stdio",
+      "command": "node",
+      "args": ["<path-to>/ta5500-rag/mcp/server.mjs"],
+      "env": {
+        "RAG_BASE_URL": "http://localhost:8000",
+        "RAG_API_KEY": ""
+      },
+      "enabled": false
+    }
+  ]
 }

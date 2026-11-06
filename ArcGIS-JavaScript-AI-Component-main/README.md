@@ -234,6 +234,21 @@ Arguments: mcp-remote https://your-remote-mcp-server.com/mcp
 
 The hub runs on port `8808` by default and is proxied through Vite at `/api/mcp` during development.
 
+### Connecting the TA5500 RAG (Tel Aviv master plan)
+
+The RAG lives in its own repo (`ta5500-rag`). It exposes an HTTP service, and the `mcp/` folder there is an MCP (stdio) wrapper around it. No change to this app's code is needed: the existing MCP passthrough agent discovers the tools from the hub.
+
+1. In the `ta5500-rag` repo, start the service: `docker compose up -d` (it listens on `http://localhost:8000`). Put `RAG_API_KEY=<your key>` in the `.env` next to its `docker-compose.yml` first, if you want the API protected.
+2. In the same repo, run `npm install` inside `mcp/`.
+3. Add the server to `mcp-hub.config.json` (see the `ta5500` entry in `mcp-hub.config.example.json`), or from the MCP manager: Command `node`, Arguments `<path-to>/ta5500-rag/mcp/server.mjs`, environment `RAG_BASE_URL=http://localhost:8000` and `RAG_API_KEY=<same key>`. Set `enabled` to `true`.
+4. Reload the app. The hub should list four tools: `search_plan`, `get_plan_contents`, `get_plan_locations`, `get_plan_chunk`.
+
+Tips:
+- Ask about the plan explicitly, for example "מה ההוראות בתוכנית תא/5500 לאזור 102א' דרום גלילות?". Questions that only mention a planning area can be routed to the map's data-exploration agent instead.
+- Check that it is the MCP agent that answered: the browser's network tab should show `tools/call` requests to `/api/mcp`.
+- Known issue: one test question ended with "The MCP Hub server did not return a response". The cause is not known yet.
+- `mcp-hub.config.json` holds the API key. It is git-ignored; do not commit it.
+
 ## Assistant Notes
 
 - The assistant stays available even on empty maps.
