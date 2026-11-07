@@ -17,6 +17,9 @@ export interface FocusValue {
   gisLayer?: string;
   value: string | number;
   weight: number;
+  /** For the selection chips: the FOCUS_LAYERS id and the readable name of the feature. */
+  layerId?: string;
+  label?: string;
 }
 
 export interface ResolvedFocus {

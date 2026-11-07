@@ -8,6 +8,7 @@ export interface FocusLayer {
   label: string;
   serviceUrl: string;
   layerId: number;
+  geometry: "polygon" | "polyline" | "point";
   codeField: string;
   /** Field shown on the chips instead of the code. */
   labelField?: string;
@@ -18,23 +19,23 @@ export interface FocusLayer {
 
 export const FOCUS_LAYERS: FocusLayer[] = [
   {
-    id: "zones", label: "אזורי ייעוד", serviceUrl: `${SERVICES}/TA5500_פוליגונים1/FeatureServer`, layerId: 128,
+    id: "zones", label: "אזורי ייעוד", serviceUrl: `${SERVICES}/TA5500_פוליגונים1/FeatureServer`, layerId: 128, geometry: "polygon",
     codeField: "EzorYeudCode", labelField: "EzorYeud", target: "gis_code", gisLayer: "zones",
   },
   {
-    id: "planning-areas", label: "אזורי תכנון", serviceUrl: `${SERVICES}/TA5500_פוליגונים1/FeatureServer`, layerId: 122,
+    id: "planning-areas", label: "אזורי תכנון", serviceUrl: `${SERVICES}/TA5500_פוליגונים1/FeatureServer`, layerId: 122, geometry: "polygon",
     codeField: "NumEzorTihnun", target: "areas",
   },
   {
-    id: "foci", label: "מוקדי פיתוח ושימוש עירוניים", serviceUrl: `${SERVICES}/TA5500_נק/FeatureServer`, layerId: 124,
+    id: "foci", label: "מוקדי פיתוח ושימוש עירוניים", serviceUrl: `${SERVICES}/TA5500_נק/FeatureServer`, layerId: 124, geometry: "point",
     codeField: "TypeCode", labelField: "TypeName", target: "gis_code", gisLayer: "foci",
   },
   {
-    id: "planning-spaces", label: "מרחבי תכנון", serviceUrl: `${SERVICES}/TA5500_פוליגונים2/FeatureServer`, layerId: 145,
+    id: "planning-spaces", label: "מרחבי תכנון", serviceUrl: `${SERVICES}/TA5500_פוליגונים2/FeatureServer`, layerId: 145, geometry: "polygon",
     codeField: "mis_ezor", labelField: "shem_ezor", target: "areas",
   },
   {
-    id: "special-streets", label: "הוראות רחוב מיוחדות", serviceUrl: `${SERVICES}/TA5500_קווים/FeatureServer`, layerId: 146,
+    id: "special-streets", label: "הוראות רחוב מיוחדות", serviceUrl: `${SERVICES}/TA5500_קווים/FeatureServer`, layerId: 146, geometry: "polyline",
     codeField: "mis_ezor", labelField: "shem_ezor", target: "entities",
   },
 ];
