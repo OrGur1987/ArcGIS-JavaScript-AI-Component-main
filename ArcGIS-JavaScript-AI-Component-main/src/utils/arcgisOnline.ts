@@ -676,20 +676,35 @@ export async function generateAndSaveWebMapEmbeddings(params: {
   const operationalLayers = Array.isArray(webMapData?.operationalLayers) ? webMapData.operationalLayers : [];
   const flattenedLayers = flattenOperationalLayers(operationalLayers);
   const candidateLayers = flattenedLayers.filter(shouldEmbedLayer);
-  const processedLayerUrls = new Set<string>();
+  // The assistant expects one record per map layer, even when layers share a service sublayer.
+  const layerInfoByUrl = new Map<string, any>();
 
   const layerRecords: LayerEmbeddingRecord[] = [];
   const embeddingInputs: string[] = [];
-  const embeddingTargetIndex: Array<{ layerIndex: number; fieldIndex: number | null }> = [];
+  // Identical texts are embedded once; each input lists every record it fills.
+  const embeddingTargets: Array<Array<{ layerIndex: number; fieldIndex: number | null }>> = [];
+  const inputIndexByText = new Map<string, number>();
+
+  const queueEmbedding = (text: string, target: { layerIndex: number; fieldIndex: number | null }) => {
+    const existing = inputIndexByText.get(text);
+    if (existing !== undefined) {
+      embeddingTargets[existing].push(target);
+      return;
+    }
+    inputIndexByText.set(text, embeddingInputs.length);
+    embeddingInputs.push(text);
+    embeddingTargets.push([target]);
+  };
 
   for (const operationalLayer of candidateLayers) {
     const layerUrl = resolveLayerUrl(operationalLayer);
     if (!layerUrl) continue;
-    if (processedLayerUrls.has(layerUrl)) continue;
-    processedLayerUrls.add(layerUrl);
 
-    const layerInfoUrl = `${layerUrl}${layerUrl.includes("?") ? "&" : "?"}f=json&token=${encodeURIComponent(token)}`;
-    const layerInfo = await fetchJson<any>(layerInfoUrl);
+    if (!layerInfoByUrl.has(layerUrl)) {
+      const layerInfoUrl = `${layerUrl}${layerUrl.includes("?") ? "&" : "?"}f=json&token=${encodeURIComponent(token)}`;
+      layerInfoByUrl.set(layerUrl, await fetchJson<any>(layerInfoUrl));
+    }
+    const layerInfo = layerInfoByUrl.get(layerUrl);
     if (layerInfo?.error) continue;
 
     const layerName = safeString(layerInfo?.name) || safeString(operationalLayer?.id) || "Layer";
@@ -706,8 +721,7 @@ export async function generateAndSaveWebMapEmbeddings(params: {
     };
 
     const layerInput = `Name: ${layerRecord.name} Title: ${layerRecord.title} Description: ${layerRecord.description}`;
-    embeddingInputs.push(layerInput);
-    embeddingTargetIndex.push({ layerIndex: layerRecords.length, fieldIndex: null });
+    queueEmbedding(layerInput, { layerIndex: layerRecords.length, fieldIndex: null });
 
     const fields = Array.isArray(layerInfo?.fields) ? layerInfo.fields : [];
     for (const field of fields) {
@@ -726,8 +740,7 @@ export async function generateAndSaveWebMapEmbeddings(params: {
       layerRecord.fields.push(fieldEntry);
 
       const fieldInput = `Name: ${fieldName} Alias: ${fieldAlias} Description: ${fieldDescription}`;
-      embeddingInputs.push(fieldInput);
-      embeddingTargetIndex.push({ layerIndex: layerRecords.length, fieldIndex });
+      queueEmbedding(fieldInput, { layerIndex: layerRecords.length, fieldIndex });
     }
 
     layerRecords.push(layerRecord);
@@ -762,7 +775,7 @@ export async function generateAndSaveWebMapEmbeddings(params: {
   }
 
   const embeddingRows = Array.isArray(embeddingsJson?.data) ? embeddingsJson.data : [];
-  if (embeddingRows.length !== embeddingTargetIndex.length) {
+  if (embeddingRows.length !== embeddingTargets.length) {
     return {
       success: false,
       message: "Embedding response size does not match the prepared input count.",
@@ -771,19 +784,20 @@ export async function generateAndSaveWebMapEmbeddings(params: {
 
   for (let rowIndex = 0; rowIndex < embeddingRows.length; rowIndex++) {
     const row = embeddingRows[rowIndex];
-    const target = embeddingTargetIndex[rowIndex];
-    const layer = layerRecords[target.layerIndex];
-    if (!layer) continue;
-
     const encodedEmbedding = safeString(row?.embedding);
     const vector = encodedEmbedding ? decodeBase64ToFloat32Vector(encodedEmbedding) : [];
     if (!vector.length) continue;
 
-    if (target.fieldIndex === null) {
-      layer.vector = vector;
-    } else {
-      const fieldEntry = layer.fields[target.fieldIndex];
-      if (fieldEntry) fieldEntry.vector = vector;
+    for (const target of embeddingTargets[rowIndex]) {
+      const layer = layerRecords[target.layerIndex];
+      if (!layer) continue;
+
+      if (target.fieldIndex === null) {
+        layer.vector = vector;
+      } else {
+        const fieldEntry = layer.fields[target.fieldIndex];
+        if (fieldEntry) fieldEntry.vector = vector;
+      }
     }
   }
 
