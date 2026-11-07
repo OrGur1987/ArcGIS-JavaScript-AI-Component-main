@@ -13,7 +13,7 @@ export interface GisCode {
 
 /** A code read from a feature that overlaps the selected polygon; `weight` is the share of the polygon it covers (0-1). */
 export interface FocusValue {
-  target: "areas" | "entities" | "gis_code";
+  target: "areas" | "entities" | "gis_code" | "note";
   gisLayer?: string;
   value: string | number;
   weight: number;
@@ -47,7 +47,7 @@ export function resolveFocusFilters(
   const unmapped: ResolvedFocus["unmapped"] = [];
   for (const { target, gisLayer = "", value } of [...values].sort((a, b) => b.weight - a.weight)) {
     const code = clean(value);
-    if (!code) continue;
+    if (!code || target === "note") continue;
     if (target !== "gis_code") {
       found[target === "areas" ? "areas" : "entities"].add(code);
       continue;

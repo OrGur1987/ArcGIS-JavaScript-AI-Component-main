@@ -8,7 +8,7 @@
     "build": "node node_modules/vite/bin/vite.js build",
     "preview": "node node_modules/vite/bin/vite.js preview",
     "test:local": "npx tsx tests/run-tests.ts",
-    "test:unit": "tsx --test src/utils/focusFilters.test.ts src/utils/focusOverlap.test.ts",
+    "test:unit": "tsx --test src/utils/focusFilters.test.ts src/utils/focusOverlap.test.ts src/utils/focusNotes.test.ts",
     "hub": "npx tsx hub/server.ts",
     "hub:dev": "npx tsx --watch hub/server.ts"
   },
