@@ -7,6 +7,7 @@ import { buildToolPromptText, dedupeGeoEntities, deriveGeoEntities, enrichGeoEnt
 import { inputSchemaToZod, normalizeToolArgsForCall, truncateDescription } from "../utils/mcpZodSchema";
 import { clearMcpGeoLayer, renderMcpGeoEntities, type GeoEntity } from "../utils/mcpGeoRenderer";
 import { setLastAssistantGeoSnapshot } from "../utils/assistantState";
+import type { GisCode } from "../utils/focusFilters";
 import { normalizeMessages, contentToText, getLastAiMessage, isAiMessageLike, isToolMessageLike, hasToolCalls, extractMessageText } from "../utils/agentHelpers";
 
 export interface McpPassthroughAgentContext {
@@ -415,6 +416,26 @@ async function callMcpTool(endpointUrl: string, name: string, args: Record<strin
     return `Tool returned an error: ${extractText(result.content) || "Unknown tool error."}`;
   }
   return extractText(result?.content) || JSON.stringify(result ?? "");
+}
+
+const gisCodesCache = new Map<string, Promise<GisCode[]>>();
+
+/** The RAG's GIS-code table (`gis_codes` of the plan locations), fetched once per hub through its `get_plan_locations` tool. */
+export function loadGisCodes(endpointUrl: string): Promise<GisCode[]> {
+  const key = normalizeUrl(endpointUrl);
+  const cached = gisCodesCache.get(key);
+  if (cached) return cached;
+  const pending = (async () => {
+    const def = (await listMcpTools(endpointUrl)).find((d) => parseQualifiedToolName(d.name).toolName === "get_plan_locations");
+    if (!def) throw new Error("The plan RAG tool get_plan_locations is not available in the MCP hub.");
+    const text = await callMcpTool(endpointUrl, def.name, {});
+    const codes = JSON.parse(text)?.gis_codes;
+    if (!Array.isArray(codes)) throw new Error(`The plan locations have no gis_codes: ${text.slice(0, 200)}`);
+    return codes as GisCode[];
+  })();
+  gisCodesCache.set(key, pending);
+  pending.catch(() => gisCodesCache.delete(key)); // a failed fetch is retried on the next call
+  return pending;
 }
 
 
