@@ -1,0 +1,19 @@
+{
+  "port": 8808,
+  "servers": [
+    {
+      "id": "ta5500",
+      "label": "TA5500 RAG (תוכנית המתאר)",
+      "transport": "stdio",
+      "command": "node",
+      "args": [
+        "C:/DEV/SRC/GeoAI/ta5500-rag/mcp/server.mjs"
+      ],
+      "env": {
+        "RAG_BASE_URL": "http://localhost:8000",
+        "RAG_API_KEY": "4d5dcb5ea5b60aeceb1609d44e3f159df309e6240f4bdb73"
+      },
+      "enabled": true
+    }
+  ]
+}
