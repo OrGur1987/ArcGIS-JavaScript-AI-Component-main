@@ -77,11 +77,12 @@ export function useWebMap(
     autoCheckedMapIdRef.current = null;
   }, []);
 
-  // Restore last map from localStorage on sign-in
+  // Restore last map from localStorage on sign-in, falling back to the configured default
   useEffect(() => {
     if (!isSignedIn || webMapId) return;
     const stored = window.localStorage.getItem(LAST_WEBMAP_STORAGE_KEY)?.trim();
-    if (stored) loadMap(stored);
+    const initial = stored || import.meta.env.VITE_DEFAULT_WEBMAP_ID?.trim();
+    if (initial) loadMap(initial);
   }, [isSignedIn, webMapId, loadMap]);
 
   // Persist / clear last map in localStorage
