@@ -8,13 +8,15 @@ interface MapViewProps {
 
 /**
  * Renders the arcgis-map element with its default widget slots.
- * Also manages mutual-exclusion between the three expand widgets so that
+ * Also manages mutual-exclusion between the expand widgets so that
  * opening one automatically collapses the others.
  */
 export function MapView({ webMapId, mapElementRef, homeElementRef }: MapViewProps) {
   const layersExpandRef = React.useRef<HTMLElement & { expanded?: boolean }>(null);
   const basemapExpandRef = React.useRef<HTMLElement & { expanded?: boolean }>(null);
   const legendExpandRef = React.useRef<HTMLElement & { expanded?: boolean }>(null);
+  const distanceExpandRef = React.useRef<HTMLElement & { expanded?: boolean }>(null);
+  const areaExpandRef = React.useRef<HTMLElement & { expanded?: boolean }>(null);
 
   // Collapse sibling expands when one opens
   useEffect(() => {
@@ -22,6 +24,8 @@ export function MapView({ webMapId, mapElementRef, homeElementRef }: MapViewProp
       layersExpandRef.current,
       basemapExpandRef.current,
       legendExpandRef.current,
+      distanceExpandRef.current,
+      areaExpandRef.current,
     ];
     const cleanups: (() => void)[] = [];
 
@@ -67,6 +71,22 @@ export function MapView({ webMapId, mapElementRef, homeElementRef }: MapViewProp
         collapse-icon="x"
       >
         <arcgis-basemap-gallery />
+      </arcgis-expand>
+      <arcgis-expand
+        ref={distanceExpandRef as React.Ref<any>}
+        slot="top-left"
+        expand-icon="measure-line"
+        collapse-icon="x"
+      >
+        <arcgis-distance-measurement-2d unit="metric" />
+      </arcgis-expand>
+      <arcgis-expand
+        ref={areaExpandRef as React.Ref<any>}
+        slot="top-left"
+        expand-icon="measure-area"
+        collapse-icon="x"
+      >
+        <arcgis-area-measurement-2d unit="metric" />
       </arcgis-expand>
       <arcgis-expand
         ref={legendExpandRef as React.Ref<any>}

@@ -26,6 +26,8 @@ import "@arcgis/map-components/components/arcgis-expand";
 import "@arcgis/map-components/components/arcgis-legend";
 import "@arcgis/map-components/components/arcgis-layer-list";
 import "@arcgis/map-components/components/arcgis-basemap-gallery";
+import "@arcgis/map-components/components/arcgis-distance-measurement-2d";
+import "@arcgis/map-components/components/arcgis-area-measurement-2d";
 import "@arcgis/ai-components/components/arcgis-assistant";
 import "@arcgis/ai-components/components/arcgis-assistant-agent";
 import "@arcgis/ai-components/components/arcgis-assistant-help-agent";
