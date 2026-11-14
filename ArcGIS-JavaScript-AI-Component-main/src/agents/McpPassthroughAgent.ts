@@ -8,7 +8,7 @@ import { inputSchemaToZod, normalizeToolArgsForCall, truncateDescription } from 
 import { clearMcpGeoLayer, renderMcpGeoEntities, type GeoEntity } from "../utils/mcpGeoRenderer";
 import { setLastAssistantGeoSnapshot } from "../utils/assistantState";
 import { applyFocusToSearchArgs, type GisCode } from "../utils/focusFilters";
-import { getActiveFocus } from "../utils/focusStore";
+import { getActiveFocus, getFocusState, setFocusEnabled } from "../utils/focusStore";
 import { normalizeMessages, contentToText, getLastAiMessage, isAiMessageLike, isToolMessageLike, hasToolCalls, extractMessageText } from "../utils/agentHelpers";
 
 export interface McpPassthroughAgentContext {
@@ -411,6 +411,7 @@ function extractText(content: unknown): string {
 }
 
 async function callMcpTool(endpointUrl: string, name: string, args: Record<string, unknown>): Promise<string> {
+  if (name === POLYGON_TOOL_NAME) return runPolygonTool(args);
   await ensureInitialized(endpointUrl);
   const focus = /(^|__)search_plan$/.test(name) ? getActiveFocus() : null;
   const callArgs = focus ? applyFocusToSearchArgs(args, focus.filters, focus.notes) : args;
@@ -489,19 +490,42 @@ function summarizeToolDescription(def: McpToolDef, serverLabel?: string): string
     : `${summary} (MCP tool: ${toolName})`;
 }
 
-/** Prompt block for the active polygon focus; empty when the focus is off, so it is rebuilt on every run. */
+/** Prompt block with the polygon state, rebuilt on every run. */
 function focusPromptText(): string {
-  const focus = getActiveFocus();
-  if (!focus) return "";
+  const { polygon, enabled, status, filters } = getFocusState();
+  if (!polygon) {
+    return `\n\nPolygon focus: no polygon is drawn on the map, so there is nothing to use as a query filter. If the user asks to query by a polygon, tell them to draw one first.`;
+  }
+  if (!enabled) {
+    return `\n\nPolygon focus: a polygon is drawn but is NOT used as a query filter. If the user asks to query by it, call ${POLYGON_TOOL_NAME} with enabled=true first.`;
+  }
+  if (status !== "ready") {
+    return `\n\nPolygon focus: the drawn polygon is selected as a query filter, but its intersection is not available (still computing or failed), so search_plan is not restricted by it.`;
+  }
   const labels = { areas: "planning areas", zone_types: "zone types", entities: "entities", headings: "headings" } as const;
   const matched = (Object.keys(labels) as (keyof typeof labels)[])
-    .filter((key) => focus.filters[key].length)
-    .map((key) => `${labels[key]}: ${focus.filters[key].join(", ")}`);
+    .filter((key) => filters[key].length)
+    .map((key) => `${labels[key]}: ${filters[key].join(", ")}`);
   return [
     "\n\nThe user selected a polygon on the map as the query focus. Questions about \"the polygon\", \"the selected area\" or \"here\" refer to it.",
     "search_plan calls are restricted to it automatically, so do not copy its filters into the call.",
     matched.length ? `The polygon intersects ${matched.join("; ")}.` : "",
   ].filter(Boolean).join(" ");
+}
+
+// Handled in the app, not by the hub: the polygon lives in the browser.
+const POLYGON_TOOL_NAME = "use_polygon_as_filter";
+const POLYGON_TOOL_DESCRIPTION =
+  "Turns the user's drawn polygon on or off as the filter for plan (search_plan) queries. Call it only when the user explicitly asks to use or stop using the polygon. It takes effect for later search_plan calls in the same request.";
+
+function runPolygonTool(args: Record<string, unknown>): string {
+  const { polygon, status } = getFocusState();
+  if (!polygon) return "No polygon is drawn on the map, so there is nothing to use. Ask the user to draw one.";
+  if (status === "loading") return "The polygon's intersection is still being computed; ask the user to try again in a moment.";
+  if (status === "error") return "The polygon's intersection could not be computed.";
+  const enabled = Boolean(args.enabled);
+  setFocusEnabled(enabled);
+  return enabled ? "The polygon is now used as a query filter." : "The polygon is no longer used as a query filter.";
 }
 
 const MCP_ROUTING_BASE_DESCRIPTION =
@@ -511,7 +535,7 @@ const MCP_ROUTING_BASE_DESCRIPTION =
   "This agent already plots any geocodable results (points, addresses, areas) directly on the map as graphics with popups, as part of answering the question — it does not need a separate layer, FeatureServer, or map-editing agent to display or add its own results. " +
   "Do not additionally select a map layer, data-exploration, or feature-layer-editing agent for the same request just because the user asked to see the results on the map or in a popup — this agent alone fully covers that. " +
   // Descriptions are read once when the assistant starts, so this hint is static and only matters when a polygon is mentioned.
-  "When the user refers to a polygon they selected or drew on the map (פוליגון שנבחר / שצויר) and asks about the master plan — תא/5500, תוכנית המתאר, הוראות, שימושים, זכויות בנייה, רח\"ק, גובה, ייעוד, אזור תכנון — use this agent, not data exploration: these are answered from the TA5500 RAG (search_plan), not from map layer attributes.";
+  "When the user refers to a polygon they selected or drew on the map (פוליגון שנבחר / שצויר) and asks about the master plan — תא/5500, תוכנית המתאר, הוראות, שימושים, זכויות בנייה, רח\"ק, גובה, ייעוד, אזור תכנון — or asks whether a polygon exists, to use it as a filter (להשתמש בפוליגון כמסנן), or to stop using it, use this agent, not data exploration: these are answered from the TA5500 RAG (search_plan) or the polygon filter tool, not from map layer attributes.";
 
 function buildDescriptionFromTools(tools: McpToolDef[], serverName: string, hubServers: HubServerSummary[] = []): string {
   if (!tools.length) {
@@ -734,6 +758,16 @@ export function registerMcpPassthroughAgent(
             },
           );
         });
+
+        const polygonAlias = makeSafeToolAlias(mcpToolDefs.length);
+        aliasMap[polygonAlias] = POLYGON_TOOL_NAME;
+        langchainTools.push(
+          tool(async (args: any) => runPolygonTool(args ?? {}), {
+            name: polygonAlias,
+            description: POLYGON_TOOL_DESCRIPTION,
+            schema: z.object({ enabled: z.boolean().describe("true to use the polygon as a filter, false to stop using it") }) as any,
+          }),
+        );
 
         const response = await invokeToolPrompt({
           promptText: `${buildToolPromptText(serverLabel, hubServers, mcpToolDefs.length, priorToolRounds)}${focusPromptText()}${userText ? `\n\nCurrent user request: ${userText}` : ""}`,
