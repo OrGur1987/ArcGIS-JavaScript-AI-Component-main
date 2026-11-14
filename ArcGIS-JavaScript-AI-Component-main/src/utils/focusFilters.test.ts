@@ -57,9 +57,10 @@ test("filters the caller passed itself win over the focus", () => {
   assert.deepEqual(merged, { question: "שאלה", zone_types: ["3.4.1"], areas: ["703"] });
 });
 
-test("focus notes are added unless the caller passed its own", () => {
+test("focus notes replace whatever notes the model passed", () => {
   const focus = { areas: [], zone_types: [], entities: [], headings: [] };
   const notes = [{ text: "t", layer: "l", code: "1", priority: 1 as const, weight: 0.5 }];
   assert.deepEqual(applyFocusToSearchArgs({ question: "q" }, focus, notes), { question: "q", focus_notes: notes });
-  assert.deepEqual(applyFocusToSearchArgs({ question: "q", focus_notes: [] }, focus, notes).focus_notes, []);
+  assert.deepEqual(applyFocusToSearchArgs({ question: "q", focus_notes: [{ text: "invented" }] }, focus, notes).focus_notes, notes);
+  assert.equal("focus_notes" in applyFocusToSearchArgs({ question: "q", focus_notes: [{ text: "invented" }] }, focus, []), false);
 });
