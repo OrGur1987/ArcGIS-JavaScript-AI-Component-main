@@ -1,4 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
+import { loadGisCodes } from "../agents/McpPassthroughAgent";
+import { resolveArcgisMcpBaseUrl } from "../utils/arcgisMcp";
+import { clearFocus, setFocusPolygon } from "../utils/focusStore";
 import {
   PolygonGroupQueryController,
   QUERY_BUFFER_METERS,
@@ -84,6 +87,13 @@ export function PolygonQueryPanel({ mapElementRef, isMapReady, webMapId }: Polyg
       setBusy(false);
     };
   }, [isMapReady, webMapId, mapElementRef]);
+
+  // A drawn polygon becomes the assistant's focus; any other state (cleared, boundary mode) drops it.
+  useEffect(() => {
+    const polygon = result?.mode === "manual" ? controllerRef.current?.getPolygon() : null;
+    if (polygon) void setFocusPolygon(polygon, () => loadGisCodes(resolveArcgisMcpBaseUrl()));
+    else clearFocus();
+  }, [result]);
 
   if (!isMapReady) return null;
 

@@ -187,6 +187,11 @@ export class PolygonGroupQueryController {
     return this.analysis !== null;
   }
 
+  /** The polygon of the current analysis, before buffering. */
+  getPolygon(): Polygon | null {
+    return this.analysis?.polygon ?? null;
+  }
+
   startDrawing(): void {
     this.clear();
     this.onDrawing(true);
