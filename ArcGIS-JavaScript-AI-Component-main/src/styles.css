@@ -711,3 +711,40 @@ arcgis-map.ds-map {
   direction: ltr;
   text-align: end;
 }
+
+/* ── Polygon query panel (draw → 100 m buffer → 5 layer groups) ───────────── */
+.pq-panel {
+  position: absolute;
+  left: var(--panel-inset);
+  bottom: calc(var(--panel-inset) + 56px);
+  width: 300px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: var(--radius-xl, 12px);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+  z-index: var(--z-header);
+  font-size: 14px;
+}
+.pq-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pq-hint { margin: 8px 0 4px; color: #555; font-size: 12px; }
+.pq-error { margin: 8px 0 0; color: #c0392b; }
+.pq-group { border-top: 1px solid #ddd; padding: 6px 0; }
+.pq-group > summary { cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.pq-badge { background: #0079c1; color: #fff; border-radius: 999px; padding: 0 8px; font-size: 12px; }
+.pq-layer { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; }
+.pq-layer--none { opacity: 0.5; }
+.pq-layer-title { flex: 1; }
+.pq-count { color: #666; font-size: 12px; }
+.pq-empty { margin: 4px 0; color: #888; font-size: 12px; }
+.pq-pdf { margin: 4px 0; padding: 2px 8px; font-size: 12px; cursor: pointer; border: 1px solid #0079c1; color: #0079c1; background: #fff; border-radius: 4px; }
+.pq-pdf:disabled { opacity: 0.5; cursor: default; }
+.pq-panel > calcite-button + calcite-button { margin-top: 8px; display: block; }
+.pq-dialog { padding: 0.5rem 0; display: flex; flex-direction: column; gap: 12px; }
+.pq-choice { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.pq-boundary select { width: 100%; margin-top: 6px; padding: 4px; }
+.pq-panel > calcite-button + calcite-button { margin-top: 8px; display: block; }
+.pq-dialog { padding: 0.5rem 0; display: flex; flex-direction: column; gap: 12px; }
+.pq-choice { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.pq-boundary select { width: 100%; margin-top: 6px; padding: 4px; }

@@ -8,6 +8,7 @@ import { SignInScreen } from "./components/SignInScreen";
 import { MapPickerScreen } from "./components/MapPickerScreen";
 import { MapView } from "./components/MapView";
 import { AssistantPanel } from "./components/AssistantPanel";
+import { PolygonQueryPanel } from "./components/PolygonQueryPanel";
 import { AppHeader } from "./components/AppHeader";
 import { AccountMenu } from "./components/AccountMenu";
 import { SignOutDialog } from "./components/SignOutDialog";
@@ -232,6 +233,11 @@ export default function App() {
             homeElementRef={webMap.homeElementRef}
           />
           <div className="ds-ambient" aria-hidden="true" />
+          <PolygonQueryPanel
+            mapElementRef={webMap.mapElementRef}
+            isMapReady={webMap.isMapReady}
+            webMapId={webMap.webMapId}
+          />
           <AssistantPanel
             webMapId={webMap.webMapId}
             mcpHubRefreshToken={assistant.mcpHubRefreshToken}
