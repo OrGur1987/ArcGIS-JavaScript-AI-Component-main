@@ -7,7 +7,8 @@ import { buildToolPromptText, dedupeGeoEntities, deriveGeoEntities, enrichGeoEnt
 import { inputSchemaToZod, normalizeToolArgsForCall, truncateDescription } from "../utils/mcpZodSchema";
 import { clearMcpGeoLayer, renderMcpGeoEntities, type GeoEntity } from "../utils/mcpGeoRenderer";
 import { setLastAssistantGeoSnapshot } from "../utils/assistantState";
-import type { GisCode } from "../utils/focusFilters";
+import { applyFocusToSearchArgs, type GisCode } from "../utils/focusFilters";
+import { getActiveFocus } from "../utils/focusStore";
 import { normalizeMessages, contentToText, getLastAiMessage, isAiMessageLike, isToolMessageLike, hasToolCalls, extractMessageText } from "../utils/agentHelpers";
 
 export interface McpPassthroughAgentContext {
@@ -411,7 +412,9 @@ function extractText(content: unknown): string {
 
 async function callMcpTool(endpointUrl: string, name: string, args: Record<string, unknown>): Promise<string> {
   await ensureInitialized(endpointUrl);
-  const result: any = await mcpRequest(endpointUrl, "tools/call", { name, arguments: args }, MCP_TOOL_CALL_TIMEOUT_MS);
+  const focus = /(^|__)search_plan$/.test(name) ? getActiveFocus() : null;
+  const callArgs = focus ? applyFocusToSearchArgs(args, focus.filters, focus.notes) : args;
+  const result: any = await mcpRequest(endpointUrl, "tools/call", { name, arguments: callArgs }, MCP_TOOL_CALL_TIMEOUT_MS);
   if (result?.isError) {
     return `Tool returned an error: ${extractText(result.content) || "Unknown tool error."}`;
   }

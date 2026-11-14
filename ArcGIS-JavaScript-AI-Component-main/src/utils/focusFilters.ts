@@ -1,4 +1,5 @@
 import { FOCUS_LIMITS } from "../config/focusLayers";
+import type { FocusNote } from "./focusNotes";
 
 export type SearchKey = "areas" | "zone_types" | "entities" | "headings";
 export type FocusFilters = Record<SearchKey, string[]>;
@@ -66,12 +67,13 @@ export function resolveFocusFilters(
   return { filters, unmapped };
 }
 
-/** The focus filters for the keys the caller left empty; filters the caller passed itself (from the user's wording) are kept. */
-export function applyFocusToSearchArgs(args: Record<string, unknown>, focus: FocusFilters): Record<string, unknown> {
+/** The focus filters (and notes) for the keys the caller left empty; filters the caller passed itself (from the user's wording) are kept. */
+export function applyFocusToSearchArgs(args: Record<string, unknown>, focus: FocusFilters, notes: FocusNote[] = []): Record<string, unknown> {
   const merged = { ...args };
   for (const key of Object.keys(focus) as SearchKey[]) {
     const given = merged[key];
     if (focus[key].length && !(Array.isArray(given) && given.length)) merged[key] = focus[key];
   }
+  if (notes.length && !merged.focus_notes) merged.focus_notes = notes;
   return merged;
 }
