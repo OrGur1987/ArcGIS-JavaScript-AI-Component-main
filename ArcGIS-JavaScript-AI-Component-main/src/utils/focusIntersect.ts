@@ -1,4 +1,5 @@
 import * as areaOperator from "@arcgis/core/geometry/operators/areaOperator";
+import * as geodesicBufferOperator from "@arcgis/core/geometry/operators/geodesicBufferOperator.js";
 import * as intersectionOperator from "@arcgis/core/geometry/operators/intersectionOperator";
 import * as lengthOperator from "@arcgis/core/geometry/operators/lengthOperator";
 import type Polygon from "@arcgis/core/geometry/Polygon";
@@ -6,7 +7,7 @@ import { executeQueryJSON } from "@arcgis/core/rest/query";
 import Query from "@arcgis/core/rest/support/Query";
 import type { GeometryUnion } from "@arcgis/core/unionTypes";
 
-import { FOCUS_LAYERS, type FocusLayer } from "../config/focusLayers";
+import { FOCUS_LAYERS, FOCUS_REACH_METERS, type FocusLayer } from "../config/focusLayers";
 import type { FocusValue } from "./focusFilters";
 import { aggregateOverlaps, type OverlapRow } from "./focusOverlap";
 
@@ -49,7 +50,11 @@ export async function intersectFocusLayers(
   const selectionArea = Math.abs(areaOperator.execute(selection));
   if (!(selectionArea > 0)) return result;
 
-  const settled = await Promise.allSettled(layers.map((layer) => queryOverlaps(layer, selection, signal)));
+  await geodesicBufferOperator.load();
+  const reach = (geodesicBufferOperator.execute(selection, FOCUS_REACH_METERS, { unit: "meters" } as any) as Polygon | null) ?? selection;
+  const settled = await Promise.allSettled(
+    layers.map((layer) => queryOverlaps(layer, layer.geometry === "polygon" ? selection : reach, signal)),
+  );
   if (signal?.aborted) throw new DOMException("The focus query was aborted.", "AbortError");
   settled.forEach((outcome, i) => {
     const layer = layers[i];

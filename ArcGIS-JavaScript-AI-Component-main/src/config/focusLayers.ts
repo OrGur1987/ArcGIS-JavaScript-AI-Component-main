@@ -88,3 +88,6 @@ export const FOCUS_LIMITS = { areas: 10, zone_types: 8, entities: 8, headings: 4
 
 /** Features that overlap the polygon by less than this share are slivers and are ignored. */
 export const MIN_OVERLAP_SHARE = 0.02;
+
+/** Line and point layers (streets with special instructions, infrastructure) are matched within this distance of the polygon; polygon layers stay exact so neighbouring zones do not leak in. */
+export const FOCUS_REACH_METERS = 10;
