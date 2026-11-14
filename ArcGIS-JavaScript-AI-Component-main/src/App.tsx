@@ -9,6 +9,7 @@ import { MapPickerScreen } from "./components/MapPickerScreen";
 import { MapView } from "./components/MapView";
 import { AssistantPanel } from "./components/AssistantPanel";
 import { PolygonQueryPanel } from "./components/PolygonQueryPanel";
+import { PolygonFocusChip } from "./components/PolygonFocusChip";
 import { AppHeader } from "./components/AppHeader";
 import { AccountMenu } from "./components/AccountMenu";
 import { SignOutDialog } from "./components/SignOutDialog";
@@ -254,6 +255,7 @@ export default function App() {
             chatPanelBorderColor={theme.chatPanelBorderColor}
             showEmptyMapAssistantNotice={showEmptyMapAssistantNotice}
             onDismissEmptyMapNotice={() => setShowEmptyMapAssistantNotice(false)}
+            footerContent={<PolygonFocusChip mapElementRef={webMap.mapElementRef} />}
           />
         </>
       )}

@@ -5,7 +5,7 @@ import { intersectFocusLayers } from "./focusIntersect";
 import { buildFocusNotes, type FocusNote } from "./focusNotes";
 
 export interface FocusState {
-  /** The toggle: the assistant gets the focus only while it is on and a polygon is resolved. */
+  /** The toggle: the assistant gets the focus only while it is on and a polygon is resolved. Off for every new polygon. */
   enabled: boolean;
   polygon: Polygon | null;
   status: "idle" | "loading" | "ready" | "error";
@@ -20,7 +20,7 @@ export interface FocusState {
 }
 
 const EMPTY: FocusState = {
-  enabled: true,
+  enabled: false,
   polygon: null,
   status: "idle",
   values: [],
@@ -52,7 +52,7 @@ export const setFocusEnabled = (enabled: boolean): void => update({ enabled });
 export function clearFocus(): void {
   running?.abort();
   running = null;
-  update({ ...EMPTY, enabled: state.enabled });
+  update({ ...EMPTY });
 }
 
 /** Intersects the polygon with the configured layers and derives the search filters and notes; a newer polygon cancels the run in progress. */
@@ -60,7 +60,7 @@ export async function setFocusPolygon(polygon: Polygon, loadGisCodes: () => Prom
   running?.abort();
   const controller = new AbortController();
   running = controller;
-  update({ ...EMPTY, enabled: state.enabled, polygon, status: "loading" });
+  update({ ...EMPTY, polygon, status: "loading" });
   try {
     const [intersect, gisCodes] = await Promise.all([intersectFocusLayers(polygon, undefined, controller.signal), loadGisCodes()]);
     if (controller.signal.aborted) return;

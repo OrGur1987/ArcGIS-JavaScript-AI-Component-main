@@ -155,6 +155,7 @@ export class PolygonGroupQueryController {
   private groupLayerByKey = new Map<string, AnyLayer>();
   private boundaryLayerByKey = new Map<string, AnyLayer>();
   private analysis: { polygon: Polygon; buffer: Polygon; mode: AnalysisMode; result: PolygonQueryResult } | null = null;
+  private layerAddedHandle: { remove(): void };
 
   constructor(
     view: any,
@@ -166,6 +167,7 @@ export class PolygonGroupQueryController {
     this.view = view;
     this.sketchLayer = new GraphicsLayer({ id: "polygon-query-sketch", listMode: "hide" });
     view.map.add(this.sketchLayer);
+    this.layerAddedHandle = view.map.layers.on("after-add", () => this.raiseSketchLayer());
 
     this.sketchVM = new SketchViewModel({
       view,
@@ -190,6 +192,13 @@ export class PolygonGroupQueryController {
   /** The polygon of the current analysis, before buffering. */
   getPolygon(): Polygon | null {
     return this.analysis?.polygon ?? null;
+  }
+
+  /** Keeps the polygon above layers added later (selections, rendered results). */
+  private raiseSketchLayer(): void {
+    const { map } = this.view;
+    const top = map.layers.length - 1;
+    if (map.layers.indexOf(this.sketchLayer) < top) map.reorder(this.sketchLayer, top);
   }
 
   startDrawing(): void {
@@ -231,6 +240,7 @@ export class PolygonGroupQueryController {
 
   destroy(): void {
     this.clear();
+    this.layerAddedHandle.remove();
     this.sketchVM.destroy();
     try {
       this.view?.map?.remove(this.sketchLayer);
@@ -322,6 +332,7 @@ export class PolygonGroupQueryController {
         }),
       );
       this.sketchLayer.add(sketchGraphic ?? new Graphic({ geometry: polygon, symbol: PLAN_SYMBOL as any }));
+      this.raiseSketchLayer();
 
       const roots = toArray(this.view.map.layers);
       const groups: GroupResult[] = [];

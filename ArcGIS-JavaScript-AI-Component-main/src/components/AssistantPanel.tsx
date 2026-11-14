@@ -41,6 +41,8 @@ export interface AssistantPanelProps {
   chatPanelBorderColor: string;
   showEmptyMapAssistantNotice: boolean;
   onDismissEmptyMapNotice: () => void;
+  /** Rendered inside the message box, in its footer next to the send button. */
+  footerContent?: React.ReactNode;
 }
 
 /**
@@ -62,6 +64,7 @@ export function AssistantPanel({
   chatPanelBorderColor,
   showEmptyMapAssistantNotice,
   onDismissEmptyMapNotice,
+  footerContent,
 }: AssistantPanelProps) {
   const assistantRef = useRef<AssistantElement>(null);
 
@@ -187,6 +190,7 @@ export function AssistantPanel({
                         title="שיחה חדשה"
                         onClick={() => void handleNewChat()}
                       ></calcite-action>
+                      {footerContent && <div slot="entry-actions-start">{footerContent}</div>}
                       <arcgis-assistant-help-agent></arcgis-assistant-help-agent>
                       <arcgis-assistant-navigation-agent></arcgis-assistant-navigation-agent>
                       <arcgis-assistant-data-exploration-agent></arcgis-assistant-data-exploration-agent>

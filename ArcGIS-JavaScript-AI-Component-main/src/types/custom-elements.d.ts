@@ -5,6 +5,7 @@ declare namespace JSX {
     "calcite-shell-panel": any;
     "calcite-panel": any;
     "calcite-button": any;
+    "calcite-icon": any;
     "calcite-action": any;
     "calcite-dialog": any;
     "calcite-modal": any;
