@@ -155,7 +155,8 @@ export class PolygonGroupQueryController {
   private groupLayerByKey = new Map<string, AnyLayer>();
   private boundaryLayerByKey = new Map<string, AnyLayer>();
   private analysis: { polygon: Polygon; buffer: Polygon; mode: AnalysisMode; result: PolygonQueryResult } | null = null;
-  private layerAddedHandle: { remove(): void };
+  /** In view.graphics: they render above every layer, including ones added later. */
+  private resultGraphics: Graphic[] = [];
 
   constructor(
     view: any,
@@ -167,7 +168,6 @@ export class PolygonGroupQueryController {
     this.view = view;
     this.sketchLayer = new GraphicsLayer({ id: "polygon-query-sketch", listMode: "hide" });
     view.map.add(this.sketchLayer);
-    this.layerAddedHandle = view.map.layers.on("after-add", () => this.raiseSketchLayer());
 
     this.sketchVM = new SketchViewModel({
       view,
@@ -180,7 +180,7 @@ export class PolygonGroupQueryController {
         this.onDrawing(false);
       } else if (event.state === "complete") {
         this.onDrawing(false);
-        void this.analyze(event.graphic.geometry as Polygon, "manual", event.graphic);
+        void this.analyze(event.graphic.geometry as Polygon, "manual");
       }
     });
   }
@@ -192,13 +192,6 @@ export class PolygonGroupQueryController {
   /** The polygon of the current analysis, before buffering. */
   getPolygon(): Polygon | null {
     return this.analysis?.polygon ?? null;
-  }
-
-  /** Keeps the polygon above layers added later (selections, rendered results). */
-  private raiseSketchLayer(): void {
-    const { map } = this.view;
-    const top = map.layers.length - 1;
-    if (map.layers.indexOf(this.sketchLayer) < top) map.reorder(this.sketchLayer, top);
   }
 
   startDrawing(): void {
@@ -217,6 +210,8 @@ export class PolygonGroupQueryController {
     this.runId++;
     this.sketchVM.cancel();
     this.sketchLayer.removeAll();
+    this.view.graphics.removeMany(this.resultGraphics);
+    this.resultGraphics = [];
     for (const lv of this.filteredLayerViews) {
       try {
         lv.filter = null;
@@ -240,7 +235,6 @@ export class PolygonGroupQueryController {
 
   destroy(): void {
     this.clear();
-    this.layerAddedHandle.remove();
     this.sketchVM.destroy();
     try {
       this.view?.map?.remove(this.sketchLayer);
@@ -312,7 +306,7 @@ export class PolygonGroupQueryController {
 
   // ── Analysis ───────────────────────────────────────────────────────────────
 
-  private async analyze(polygon: Polygon, mode: AnalysisMode, sketchGraphic?: Graphic): Promise<void> {
+  private async analyze(polygon: Polygon, mode: AnalysisMode): Promise<void> {
     const runId = ++this.runId;
     this.onBusy(true);
     try {
@@ -321,7 +315,7 @@ export class PolygonGroupQueryController {
       if (!buffer) throw new Error("יצירת הבאפר נכשלה");
 
       this.sketchLayer.removeAll();
-      this.sketchLayer.add(
+      this.resultGraphics = [
         new Graphic({
           geometry: buffer,
           symbol: {
@@ -330,9 +324,9 @@ export class PolygonGroupQueryController {
             outline: { color: [0, 0, 255, 0.8], width: 1.5, style: "dash" },
           } as any,
         }),
-      );
-      this.sketchLayer.add(sketchGraphic ?? new Graphic({ geometry: polygon, symbol: PLAN_SYMBOL as any }));
-      this.raiseSketchLayer();
+        new Graphic({ geometry: polygon, symbol: PLAN_SYMBOL as any }),
+      ];
+      this.view.graphics.addMany(this.resultGraphics);
 
       const roots = toArray(this.view.map.layers);
       const groups: GroupResult[] = [];
