@@ -8,7 +8,7 @@ import { inputSchemaToZod, normalizeToolArgsForCall, truncateDescription } from 
 import { clearMcpGeoLayer, renderMcpGeoEntities, type GeoEntity } from "../utils/mcpGeoRenderer";
 import { setLastAssistantGeoSnapshot } from "../utils/assistantState";
 import { applyFocusToSearchArgs, type GisCode } from "../utils/focusFilters";
-import { getActiveFocus } from "../utils/focusStore";
+import { getActiveFocus, subscribeFocus } from "../utils/focusStore";
 import { normalizeMessages, contentToText, getLastAiMessage, isAiMessageLike, isToolMessageLike, hasToolCalls, extractMessageText } from "../utils/agentHelpers";
 
 export interface McpPassthroughAgentContext {
@@ -489,6 +489,27 @@ function summarizeToolDescription(def: McpToolDef, serverLabel?: string): string
     : `${summary} (MCP tool: ${toolName})`;
 }
 
+const FOCUS_ROUTING_TEXT =
+  "The user has a polygon selected on the map as the query focus: use this agent for questions about the plan rules, zoning, or permitted uses at that polygon or selected area.";
+
+const withFocusRouting = (description: string): string => (getActiveFocus() ? `${description}\n${FOCUS_ROUTING_TEXT}` : description);
+const stripFocusRouting = (description: string): string => description.replace(`\n${FOCUS_ROUTING_TEXT}`, "");
+
+/** Prompt block for the active polygon focus; empty when the focus is off, so it is rebuilt on every run. */
+function focusPromptText(): string {
+  const focus = getActiveFocus();
+  if (!focus) return "";
+  const labels = { areas: "planning areas", zone_types: "zone types", entities: "entities", headings: "headings" } as const;
+  const matched = (Object.keys(labels) as (keyof typeof labels)[])
+    .filter((key) => focus.filters[key].length)
+    .map((key) => `${labels[key]}: ${focus.filters[key].join(", ")}`);
+  return [
+    "\n\nThe user selected a polygon on the map as the query focus. Questions about \"the polygon\", \"the selected area\" or \"here\" refer to it.",
+    "search_plan calls are restricted to it automatically, so do not copy its filters into the call.",
+    matched.length ? `The polygon intersects ${matched.join("; ")}.` : "",
+  ].filter(Boolean).join(" ");
+}
+
 const MCP_ROUTING_BASE_DESCRIPTION =
   "Primary agent for external, non-map questions that need MCP tools or live data sources. " +
   "Use this when the answer depends on connected MCP tools, external services, or structured remote data rather than only what is already visible in the active map. " +
@@ -540,7 +561,7 @@ export async function refreshMcpAgentDescription(assistant: HTMLElement): Promis
     if (tools.length) {
       agentEl.agent = {
         ...agentEl.agent,
-        description: buildDescriptionFromTools(tools, serverName, hubServers),
+        description: withFocusRouting(buildDescriptionFromTools(tools, serverName, hubServers)),
       };
     }
   } catch {}
@@ -719,7 +740,7 @@ export function registerMcpPassthroughAgent(
         });
 
         const response = await invokeToolPrompt({
-          promptText: `${buildToolPromptText(serverLabel, hubServers, mcpToolDefs.length, priorToolRounds)}${userText ? `\n\nCurrent user request: ${userText}` : ""}`,
+          promptText: `${buildToolPromptText(serverLabel, hubServers, mcpToolDefs.length, priorToolRounds)}${focusPromptText()}${userText ? `\n\nCurrent user request: ${userText}` : ""}`,
           messages: promptMessages,
           tools: langchainTools,
           temperature: 0,
@@ -923,7 +944,7 @@ export function registerMcpPassthroughAgent(
   const agent = {
     id: agentId,
     name: serverLabel,
-    description: `${MCP_ROUTING_BASE_DESCRIPTION} Connected server: ${serverLabel}. Do not use this for questions about the active map, current layers, or content already loaded in the app.`,
+    description: withFocusRouting(`${MCP_ROUTING_BASE_DESCRIPTION} Connected server: ${serverLabel}. Do not use this for questions about the active map, current layers, or content already loaded in the app.`),
     createGraph,
     workspace: {},
   } as any;
@@ -932,6 +953,7 @@ export function registerMcpPassthroughAgent(
   if (existing) {
     const outgoingUrl = (existing as any)._mcpBaseUrl;
     if (outgoingUrl) clearMcpCaches(outgoingUrl);
+    (existing as any)._unsubscribeFocus?.();
     existing.remove();
   }
 
@@ -940,4 +962,10 @@ export function registerMcpPassthroughAgent(
   agentEl._mcpBaseUrl = ctx.baseUrl ?? "";
   agentEl.agent = agent;
   assistant.appendChild(agentEl);
+  // The routing text follows the focus toggle; the subscription ends with the element.
+  agentEl._unsubscribeFocus = subscribeFocus(() => {
+    if (!agentEl.isConnected) return agentEl._unsubscribeFocus?.();
+    const description = withFocusRouting(stripFocusRouting(agentEl.agent.description));
+    if (description !== agentEl.agent.description) agentEl.agent = { ...agentEl.agent, description };
+  });
 }
