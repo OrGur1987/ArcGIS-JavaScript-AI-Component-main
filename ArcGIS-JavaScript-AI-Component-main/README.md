@@ -240,7 +240,7 @@ The RAG lives in its own repo (`ta5500-rag`). It exposes an HTTP service, and th
 
 1. In the `ta5500-rag` repo, start the service: `docker compose up -d` (it listens on `http://localhost:8000`). Put `RAG_API_KEY=<your key>` in the `.env` next to its `docker-compose.yml` first, if you want the API protected.
 2. In the same repo, run `npm install` inside `mcp/`.
-3. Add the server to `mcp-hub.config.json` (see the `ta5500` entry in `mcp-hub.config.example.json`), or from the MCP manager: Command `node`, Arguments `<path-to>/ta5500-rag/mcp/server.mjs`, environment `RAG_BASE_URL=http://localhost:8000` and `RAG_API_KEY=<same key>`. Set `enabled` to `true`.
+3. Add the server to `mcp-hub.config.json` (see the `ta5500` entry there), or from the MCP manager: Command `node`, Arguments `<path-to>/ta5500-rag/mcp/server.mjs`, environment `RAG_BASE_URL=http://localhost:8000` and `RAG_API_KEY=<same key>`. Set `enabled` to `true`. The entry expects `ta5500-rag` as a sibling of this repo's root folder; its relative path (`../../ta5500-rag/mcp/server.mjs`) resolves from the folder where the hub starts, so start the hub from this repo's app folder (the one containing `package.json`).
 4. Reload the app. The hub should list four tools: `search_plan`, `get_plan_contents`, `get_plan_locations`, `get_plan_chunk`.
 
 Tips:
